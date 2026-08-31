@@ -1,0 +1,2458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RPA Non-PO Invoice Processing | VIC.AI Phase 1</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --background: #f7f8fb;
+      --foreground: #0b1020;
+      --card: #0b1020;
+      --accent: #4361ee;
+      --blue: #4361ee;
+      --blue-light: #8ea7ff;
+      --blue-pale: #edf1ff;
+      --muted: #566071;
+      --line: rgba(11, 16, 32, 0.12);
+      --white: #ffffff;
+      --green: #15835b;
+      --green-pale: #eaf8f1;
+      --amber: #a96c15;
+      --amber-pale: #fff5df;
+      --font: "Manrope", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: var(--background);
+      color: var(--foreground);
+      font-family: var(--font);
+    }
+
+    body {
+      user-select: none;
+    }
+
+    .deck {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .slide {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 1920px;
+      height: 1080px;
+      padding: 72px 88px;
+      overflow: hidden;
+      display: none;
+      flex-direction: column;
+      transform-origin: center center;
+      background: var(--background);
+    }
+
+    .slide.active {
+      display: flex;
+    }
+
+    .slide::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.045;
+      background-image:
+        linear-gradient(
+          90deg,
+          rgba(67, 97, 238, 0.26) 1px,
+          transparent 1px
+        ),
+        linear-gradient(
+          rgba(67, 97, 238, 0.2) 1px,
+          transparent 1px
+        );
+      background-size: 80px 80px;
+      mask-image: linear-gradient(120deg, #000, transparent 72%);
+    }
+
+    .dark {
+      background: var(--card);
+      color: var(--white);
+    }
+
+    .dark::after {
+      opacity: 0.06;
+      background-image:
+        linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0.2) 1px,
+          transparent 1px
+        ),
+        linear-gradient(
+          rgba(255, 255, 255, 0.14) 1px,
+          transparent 1px
+        );
+      mask-image: linear-gradient(120deg, #fff, transparent 75%);
+    }
+
+    .slide > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 126px;
+      line-height: 0.96;
+      letter-spacing: -0.065em;
+      font-weight: 800;
+    }
+
+    h2 {
+      font-size: 68px;
+      line-height: 1.03;
+      letter-spacing: -0.05em;
+      font-weight: 800;
+    }
+
+    h3 {
+      font-size: 32px;
+      line-height: 1.12;
+      letter-spacing: -0.03em;
+      font-weight: 800;
+    }
+
+    p {
+      font-size: 28px;
+      line-height: 1.35;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .dark .muted {
+      color: rgba(255, 255, 255, 0.66);
+    }
+
+    .eyebrow {
+      font-size: 21px;
+      line-height: 1.2;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--blue);
+    }
+
+    .dark .eyebrow {
+      color: var(--blue-light);
+    }
+
+    .meta {
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .dark .meta {
+      color: rgba(255, 255, 255, 0.48);
+    }
+
+    .accent {
+      color: var(--blue);
+    }
+
+    .dark .accent {
+      color: var(--blue-light);
+    }
+
+    .topline {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer {
+      position: absolute;
+      left: 88px;
+      right: 88px;
+      bottom: 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .dark .footer {
+      color: rgba(255, 255, 255, 0.42);
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 11px 16px;
+      border-radius: 12px;
+      background: var(--blue-pale);
+      color: #2037a4;
+      font-size: 19px;
+      font-weight: 800;
+    }
+
+    .dot {
+      width: 15px;
+      height: 15px;
+      flex: 0 0 auto;
+      display: inline-block;
+      border-radius: 50%;
+      background: var(--blue);
+    }
+
+    .head {
+      margin-top: 52px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .head .note {
+      max-width: 460px;
+      text-align: right;
+      font-size: 23px;
+      line-height: 1.35;
+      color: var(--muted);
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+    }
+
+    .slide.active .reveal {
+      animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+    }
+
+    .slide.active .reveal-scale {
+      animation: scale-in 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+    }
+
+    .d1 {
+      animation-delay: 0.08s !important;
+    }
+
+    .d2 {
+      animation-delay: 0.2s !important;
+    }
+
+    .d3 {
+      animation-delay: 0.32s !important;
+    }
+
+    .d4 {
+      animation-delay: 0.44s !important;
+    }
+
+    .d5 {
+      animation-delay: 0.56s !important;
+    }
+
+    .d6 {
+      animation-delay: 0.68s !important;
+    }
+
+    .d7 {
+      animation-delay: 0.8s !important;
+    }
+
+    .d8 {
+      animation-delay: 0.92s !important;
+    }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(28px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes scale-in {
+      from {
+        opacity: 0;
+        transform: scale(0.94);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes breathe {
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: 0.78;
+      }
+
+      50% {
+        transform: scale(1.07);
+        opacity: 1;
+      }
+    }
+
+    /* Navigation */
+
+    .nav {
+      position: fixed;
+      z-index: 50;
+      left: 50%;
+      bottom: 22px;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+    }
+
+    .nav button {
+      width: 9px;
+      height: 9px;
+      padding: 0;
+      border: 1px solid rgba(11, 16, 32, 0.5);
+      border-radius: 50%;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .nav button.active {
+      border-color: var(--blue);
+      background: var(--blue);
+      transform: scale(1.3);
+    }
+
+    .controls {
+      position: fixed;
+      z-index: 50;
+      right: 28px;
+      bottom: 20px;
+      display: flex;
+      gap: 8px;
+      opacity: 0.72;
+    }
+
+    .controls button {
+      border: 1px solid rgba(11, 16, 32, 0.15);
+      border-radius: 7px;
+      padding: 7px 10px;
+      background: rgba(255, 255, 255, 0.84);
+      color: var(--foreground);
+      font-family: var(--font);
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .controls button:hover {
+      background: var(--blue-pale);
+    }
+
+    /* Slide 1 */
+
+    .hero {
+      padding: 0;
+      display: grid;
+      grid-template-columns: 1.03fr 0.97fr;
+    }
+
+    .hero-left {
+      padding: 78px 78px 70px 88px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .hero-right {
+      position: relative;
+      overflow: hidden;
+      padding: 78px 88px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: var(--card);
+      color: var(--white);
+    }
+
+    .hero-right::before {
+      content: "";
+      position: absolute;
+      top: 168px;
+      right: -155px;
+      width: 650px;
+      height: 650px;
+      border: 1px solid rgba(142, 167, 255, 0.34);
+      border-radius: 50%;
+      box-shadow:
+        0 0 0 42px rgba(67, 97, 238, 0.09),
+        0 0 0 84px rgba(67, 97, 238, 0.05);
+      animation: breathe 8s ease-in-out infinite;
+    }
+
+    .hero-right::after {
+      content: "";
+      position: absolute;
+      top: 280px;
+      right: 80px;
+      width: 430px;
+      height: 430px;
+      border-radius: 50%;
+      background: radial-gradient(
+        circle,
+        rgba(67, 97, 238, 0.38),
+        transparent 68%
+      );
+    }
+
+    .hero-title {
+      margin-top: 110px;
+    }
+
+    .hero-title span {
+      display: block;
+    }
+
+    .hero-kicker {
+      display: inline-block;
+      padding: 12px 16px;
+      background: var(--blue);
+      color: var(--white);
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .hero-callout {
+      max-width: 600px;
+      padding-left: 24px;
+      border-left: 8px solid var(--blue-light);
+    }
+
+    .hero-callout p {
+      color: rgba(255, 255, 255, 0.78);
+      font-size: 27px;
+    }
+
+    .hero-mark {
+      position: relative;
+      z-index: 1;
+      font-size: 198px;
+      line-height: 0.8;
+      letter-spacing: -0.1em;
+      font-weight: 800;
+    }
+
+    .hero-mark small {
+      display: block;
+      max-width: 490px;
+      margin-top: 28px;
+      color: rgba(255, 255, 255, 0.67);
+      font-size: 28px;
+      line-height: 1.28;
+      letter-spacing: -0.02em;
+      font-weight: 500;
+    }
+
+    /* Slide 2 */
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 22px;
+    }
+
+    .card {
+      min-height: 250px;
+      padding: 30px 30px 34px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: var(--white);
+    }
+
+    .card .value {
+      color: var(--blue);
+      font-size: 91px;
+      line-height: 0.9;
+      letter-spacing: -0.08em;
+      font-weight: 800;
+    }
+
+    .card .label {
+      max-width: 280px;
+      font-size: 24px;
+      line-height: 1.23;
+      font-weight: 800;
+    }
+
+    .band {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 27px 32px;
+      border-radius: 20px;
+      background: var(--blue-pale);
+    }
+
+    .band strong {
+      font-size: 26px;
+    }
+
+    .band span {
+      color: #4c5565;
+      font-size: 25px;
+    }
+
+    /* Slide 3 */
+
+    .agenda {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 80px;
+      align-items: center;
+    }
+
+    .agenda-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .agenda-row {
+      display: grid;
+      grid-template-columns: 86px 1fr;
+      align-items: center;
+      padding: 21px 28px;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      background: var(--white);
+    }
+
+    .agenda-row .n {
+      color: var(--blue);
+      font-size: 29px;
+      font-weight: 800;
+    }
+
+    .agenda-row .t {
+      font-size: 29px;
+      font-weight: 800;
+    }
+
+    .agenda-panel {
+      position: relative;
+      height: 610px;
+      padding: 45px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border-radius: 28px;
+      background: var(--card);
+      color: var(--white);
+    }
+
+    .agenda-panel::before {
+      content: "ALIGN";
+      position: absolute;
+      top: 42px;
+      right: -30px;
+      color: rgba(255, 255, 255, 0.055);
+      font-size: 160px;
+      font-weight: 800;
+      letter-spacing: -0.12em;
+    }
+
+    .agenda-panel .big {
+      position: relative;
+      font-size: 112px;
+      line-height: 0.86;
+      letter-spacing: -0.09em;
+      font-weight: 800;
+    }
+
+    .nodes {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .node {
+      width: 24px;
+      height: 24px;
+      border: 5px solid var(--blue-light);
+      border-radius: 50%;
+    }
+
+    .node.active {
+      background: var(--blue-light);
+    }
+
+    .connector {
+      width: 76px;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .agenda-panel .small {
+      max-width: 475px;
+      color: rgba(255, 255, 255, 0.68);
+      font-size: 26px;
+    }
+
+    /* Slide 4 */
+
+    .structure {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 0.8fr 1.2fr;
+      gap: 70px;
+      align-items: center;
+    }
+
+    .entity-card {
+      position: relative;
+      min-height: 570px;
+      padding: 45px;
+      overflow: hidden;
+      border-radius: 28px;
+      background: var(--card);
+      color: var(--white);
+    }
+
+    .entity-card::after {
+      content: "NEER + NEET";
+      position: absolute;
+      right: -25px;
+      bottom: 8px;
+      color: rgba(255, 255, 255, 0.07);
+      font-size: 105px;
+      letter-spacing: -0.1em;
+      font-weight: 800;
+    }
+
+    .entity-card .big {
+      position: relative;
+      z-index: 1;
+      font-size: 120px;
+      line-height: 0.82;
+      letter-spacing: -0.1em;
+      font-weight: 800;
+    }
+
+    .entity-card p {
+      position: relative;
+      z-index: 1;
+      max-width: 390px;
+      margin-top: 38px;
+      color: rgba(255, 255, 255, 0.69);
+    }
+
+    .entity-card .mini {
+      position: absolute;
+      left: 45px;
+      bottom: 45px;
+      color: var(--blue-light);
+      font-size: 21px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .chain {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .chain-row {
+      display: grid;
+      grid-template-columns: 260px 68px 1fr;
+      gap: 18px;
+      align-items: center;
+      padding: 25px 28px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--white);
+    }
+
+    .chain-row .label {
+      font-size: 26px;
+      font-weight: 800;
+    }
+
+    .chain-row .arrow {
+      color: var(--blue);
+      font-size: 34px;
+      text-align: center;
+    }
+
+    .chain-row .detail {
+      color: #525c6e;
+      font-size: 24px;
+      line-height: 1.28;
+    }
+
+    .codes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .code {
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: var(--blue-pale);
+      color: #2037a4;
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    /* Slide 5 */
+
+    .roles {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 72px;
+      align-items: center;
+    }
+
+    .lane-card {
+      padding: 34px;
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      background: var(--white);
+    }
+
+    .lane {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 24px;
+      align-items: center;
+      padding: 26px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .lane:first-of-type {
+      border-top: 0;
+    }
+
+    .lane .role {
+      font-size: 25px;
+      font-weight: 800;
+    }
+
+    .lane .task {
+      color: #505969;
+      font-size: 25px;
+      line-height: 1.3;
+    }
+
+    .sod {
+      position: relative;
+      min-height: 560px;
+      padding: 48px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border-radius: 30px;
+      background: var(--card);
+      color: var(--white);
+    }
+
+    .sod::before {
+      content: "SOD";
+      position: absolute;
+      top: 65px;
+      right: -20px;
+      color: rgba(255, 255, 255, 0.055);
+      font-size: 180px;
+      letter-spacing: -0.12em;
+      font-weight: 800;
+    }
+
+    .sod .statement {
+      position: relative;
+      font-size: 87px;
+      line-height: 0.94;
+      letter-spacing: -0.08em;
+      font-weight: 800;
+    }
+
+    .sod .statement em {
+      color: var(--blue-light);
+      font-style: normal;
+    }
+
+    .wf {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .wf-box {
+      padding: 16px 18px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 12px;
+      font-size: 21px;
+      font-weight: 800;
+    }
+
+    .wf-box.active {
+      border-color: var(--blue-light);
+      background: var(--blue-light);
+      color: #071032;
+    }
+
+    .wf-arrow {
+      color: var(--blue-light);
+      font-size: 28px;
+    }
+
+    /* Slide 6 */
+
+    .intake {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 0.76fr 1.24fr;
+      gap: 72px;
+      align-items: center;
+    }
+
+    .mail {
+      position: relative;
+      min-height: 550px;
+      padding: 50px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border-radius: 30px;
+      background: var(--card);
+      color: var(--white);
+    }
+
+    .mail::after {
+      content: "99%";
+      position: absolute;
+      right: -28px;
+      bottom: -50px;
+      color: rgba(142, 167, 255, 0.12);
+      font-size: 230px;
+      letter-spacing: -0.12em;
+      font-weight: 800;
+    }
+
+    .mail .small {
+      color: var(--blue-light);
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    .mail .big {
+      position: relative;
+      z-index: 1;
+      font-size: 116px;
+      line-height: 0.82;
+      letter-spacing: -0.1em;
+      font-weight: 800;
+    }
+
+    .mail p {
+      position: relative;
+      z-index: 1;
+      max-width: 420px;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 27px;
+    }
+
+    .flow {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .flow-row {
+      display: grid;
+      grid-template-columns: 64px 1fr 160px;
+      gap: 20px;
+      align-items: center;
+      padding: 25px 27px;
+      border: 1px solid var(--line);
+      border-radius: 19px;
+      background: var(--white);
+    }
+
+    .flow-num {
+      width: 54px;
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: var(--blue-pale);
+      color: var(--blue);
+      font-size: 23px;
+      font-weight: 800;
+    }
+
+    .flow-row strong {
+      font-size: 28px;
+    }
+
+    .flow-row span {
+      display: block;
+      margin-top: 5px;
+      color: #566071;
+      font-size: 22px;
+    }
+
+    .flow-side {
+      color: var(--blue);
+      text-align: right;
+      font-size: 19px;
+      font-weight: 800;
+    }
+
+    /* Slide 7 */
+
+    .process {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 0.84fr 1.16fr;
+      gap: 72px;
+      align-items: center;
+    }
+
+    .tool-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .tool {
+      padding: 26px 28px;
+      border: 1px solid var(--line);
+      border-radius: 19px;
+      background: var(--white);
+    }
+
+    .tool.feature {
+      padding: 33px 28px;
+      border-color: var(--blue);
+      background: var(--blue);
+      color: var(--white);
+    }
+
+    .tool .micro {
+      color: #6a7381;
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .tool.feature .micro {
+      color: #dce3ff;
+    }
+
+    .tool strong {
+      display: block;
+      margin-top: 9px;
+      font-size: 30px;
+    }
+
+    .fields {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .field {
+      padding: 10px 12px;
+      border-radius: 9px;
+      background: var(--blue-pale);
+      color: #2138a4;
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .tool.feature .field {
+      background: rgba(255, 255, 255, 0.15);
+      color: var(--white);
+    }
+
+    .sap {
+      padding: 35px;
+      border-radius: 28px;
+      background: var(--card);
+      color: var(--white);
+    }
+
+    .sap-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .sap-title {
+      font-size: 27px;
+      font-weight: 800;
+    }
+
+    .sap-badge {
+      padding: 9px 13px;
+      border-radius: 9px;
+      background: var(--blue-light);
+      color: #071032;
+      font-size: 19px;
+      font-weight: 800;
+    }
+
+    .table {
+      margin-top: 26px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 15px;
+    }
+
+    .tr {
+      display: grid;
+      grid-template-columns: 1fr 0.55fr 1.05fr 1.25fr 0.75fr;
+    }
+
+    .tr > div {
+      padding: 16px 13px;
+      border-right: 1px solid rgba(255, 255, 255, 0.12);
+      font-size: 18px;
+    }
+
+    .tr > div:last-child {
+      border-right: 0;
+    }
+
+    .th {
+      background: rgba(142, 167, 255, 0.17);
+      color: #c8d2ff;
+      font-weight: 800;
+    }
+
+    .tb {
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      color: rgba(255, 255, 255, 0.82);
+    }
+
+    .tb:nth-child(odd) {
+      background: rgba(255, 255, 255, 0.035);
+    }
+
+    .split-note {
+      display: flex;
+      justify-content: space-between;
+      gap: 28px;
+      margin-top: 21px;
+    }
+
+    .split-note strong {
+      color: var(--blue-light);
+      font-size: 23px;
+    }
+
+    .split-note span {
+      max-width: 390px;
+      color: rgba(255, 255, 255, 0.63);
+      text-align: right;
+      font-size: 21px;
+    }
+
+    /* Slide 8 */
+
+    .watch {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+      align-content: center;
+    }
+
+    .watch-card {
+      min-height: 165px;
+      padding: 26px 30px;
+      display: grid;
+      grid-template-columns: 65px 1fr;
+      gap: 20px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: var(--white);
+    }
+
+    .watch-num {
+      width: 54px;
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 14px;
+      background: var(--amber-pale);
+      color: var(--amber);
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .watch-card h3 {
+      margin-bottom: 7px;
+      font-size: 28px;
+    }
+
+    .watch-card p {
+      color: #576071;
+      font-size: 23px;
+      line-height: 1.3;
+    }
+
+    .control-band {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 27px 32px;
+      border-radius: 22px;
+      background: var(--card);
+      color: var(--white);
+    }
+
+    .control-band strong {
+      font-size: 27px;
+    }
+
+    .control-band span {
+      color: rgba(255, 255, 255, 0.67);
+      font-size: 23px;
+    }
+
+    /* Slide 9 */
+
+    .approval {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.35fr 0.65fr;
+      gap: 78px;
+      align-items: center;
+    }
+
+    .ladder {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .threshold {
+      display: grid;
+      grid-template-columns: 190px 1fr 260px;
+      gap: 20px;
+      align-items: center;
+      padding: 25px 28px;
+      border: 1px solid var(--line);
+      border-radius: 19px;
+      background: var(--white);
+    }
+
+    .threshold .amount {
+      font-size: 34px;
+      letter-spacing: -0.04em;
+      font-weight: 800;
+    }
+
+    .threshold .rule {
+      font-size: 26px;
+      font-weight: 800;
+    }
+
+    .threshold .detail {
+      color: #5b6472;
+      text-align: right;
+      font-size: 21px;
+      line-height: 1.27;
+    }
+
+    .auto {
+      border-color: #cdebdc;
+      background: var(--green-pale);
+    }
+
+    .auto .amount {
+      color: var(--green);
+    }
+
+    .parked {
+      border-color: #d8e0ff;
+      background: var(--blue-pale);
+    }
+
+    .parked .amount {
+      color: var(--blue);
+    }
+
+    .reason {
+      border-color: #f0dfb8;
+      background: var(--amber-pale);
+    }
+
+    .reason .amount {
+      color: var(--amber);
+    }
+
+    .escalate {
+      position: relative;
+      min-height: 420px;
+      padding: 40px;
+      overflow: hidden;
+      border-radius: 28px;
+      background: var(--card);
+      color: var(--white);
+    }
+
+    .escalate::after {
+      content: "3";
+      position: absolute;
+      right: -8px;
+      bottom: -70px;
+      color: rgba(142, 167, 255, 0.13);
+      font-size: 310px;
+      line-height: 1;
+      font-weight: 800;
+    }
+
+    .escalate h3 {
+      color: var(--blue-light);
+      font-size: 25px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .esc {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-top: 31px;
+    }
+
+    .esc .bubble {
+      width: 67px;
+      height: 67px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: var(--blue-light);
+      color: #071032;
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .esc span {
+      font-size: 25px;
+      font-weight: 800;
+    }
+
+    .escalate p {
+      position: relative;
+      z-index: 1;
+      margin-top: 36px;
+      color: rgba(255, 255, 255, 0.64);
+      font-size: 23px;
+    }
+
+    /* Slide 10 */
+
+    .align {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.18fr 0.82fr;
+      gap: 74px;
+      align-items: center;
+    }
+
+    .questions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .question {
+      display: grid;
+      grid-template-columns: 55px 1fr;
+      gap: 16px;
+      align-items: start;
+      padding: 17px 20px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--white);
+    }
+
+    .question .number {
+      color: var(--blue);
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .question .text {
+      font-size: 24px;
+      line-height: 1.3;
+      font-weight: 800;
+    }
+
+    .build {
+      position: relative;
+      min-height: 600px;
+      padding: 45px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border-radius: 30px;
+      background: var(--card);
+      color: var(--white);
+    }
+
+    .build::before {
+      content: "BUILD";
+      position: absolute;
+      top: 58px;
+      right: -22px;
+      color: rgba(255, 255, 255, 0.055);
+      font-size: 145px;
+      letter-spacing: -0.12em;
+      font-weight: 800;
+    }
+
+    .build .micro {
+      color: var(--blue-light);
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    .build .big {
+      position: relative;
+      font-size: 80px;
+      line-height: 0.95;
+      letter-spacing: -0.08em;
+      font-weight: 800;
+    }
+
+    .build .big em {
+      color: var(--blue-light);
+      font-style: normal;
+    }
+
+    .guardrails {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .guard {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .guard i {
+      width: 17px;
+      height: 17px;
+      display: inline-block;
+      border-radius: 50%;
+      background: var(--blue-light);
+    }
+
+    @media (max-width: 1100px) {
+      .controls {
+        display: none;
+      }
+
+      .nav {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="deck" id="deck">
+
+    <!-- Slide 1 -->
+    <section class="slide hero active" data-slide="1">
+      <div class="hero-left">
+        <div class="topline reveal d1">
+          <span class="eyebrow">RPA / NEER + NEET</span>
+          <span class="meta">SAP S/4HANA 2021</span>
+        </div>
+
+        <div class="hero-title reveal d2">
+          <h1>
+            Non-PO<br>
+            invoice<br>
+            <span class="accent">processing.</span>
+          </h1>
+        </div>
+
+        <div
+          class="reveal d3"
+          style="display:flex;gap:22px;align-items:flex-start;max-width:760px"
+        >
+          <div
+            style="width:10px;height:110px;background:var(--blue);border-radius:5px"
+          ></div>
+
+          <div>
+            <div class="hero-kicker">
+              VIC.AI / Phase 1 build inputs
+            </div>
+
+            <p class="muted" style="margin-top:20px">
+              A current-state reference for managers, developers, RPA, and the
+              VIC.AI team. No decisions or timelines requested.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-right">
+        <div class="topline reveal d2">
+          <span class="eyebrow">MANAGER BRIEFING</span>
+          <span class="meta">01 / 10</span>
+        </div>
+
+        <div class="hero-mark reveal-scale d3">
+          RPA
+          <small>
+            Make the real workflow visible before the automation is built.
+          </small>
+        </div>
+
+        <div class="hero-callout reveal d4">
+          <p>
+            Focus: workflow, controls, exceptions, and the build considerations
+            inside a real invoice.
+          </p>
+        </div>
+      </div>
+
+      <div class="footer">
+        <span>RPA / VIC.AI PHASE 1</span>
+        <span>Manager presentation</span>
+      </div>
+    </section>
+
+    <!-- Slide 2 -->
+    <section class="slide" data-slide="2">
+      <div class="topline reveal d1">
+        <span class="eyebrow">02 / SNAPSHOT</span>
+        <span class="meta">SCOPE + VOLUME</span>
+      </div>
+
+      <div class="head reveal d2">
+        <h2>
+          Small intake surface.<br>
+          <span class="accent">High coding complexity.</span>
+        </h2>
+
+        <div class="note">
+          Regulatory &amp; Public Affairs invoices for NEER + NEET, processed in
+          SAP S/4HANA 2021.
+        </div>
+      </div>
+
+      <div class="cards" style="margin-top:58px">
+        <div class="card reveal d3">
+          <div class="value">~200</div>
+          <div class="label">invoices per month</div>
+        </div>
+
+        <div class="card reveal d4">
+          <div class="value">~99%</div>
+          <div class="label">arrive as PDF</div>
+        </div>
+
+        <div class="card reveal d5">
+          <div class="value">100%</div>
+          <div class="label">Non-PO invoice type</div>
+        </div>
+
+        <div class="card reveal d6">
+          <div class="value">1</div>
+          <div class="label">shared mailbox processor</div>
+        </div>
+      </div>
+
+      <div class="band reveal d7" style="margin-top:36px">
+        <span class="dot"></span>
+        <strong>Platform:</strong>
+        <span>SAP S/4HANA 2021 accessed via Fiori + GUI</span>
+        <span class="pill" style="margin-left:auto">RPA scope only</span>
+      </div>
+
+      <div class="footer">
+        <span>RPA / VIC.AI PHASE 1</span>
+        <span>Scope baseline</span>
+      </div>
+    </section>
+
+    <!-- Slide 3 -->
+    <section class="slide" data-slide="3">
+      <div class="topline reveal d1">
+        <span class="eyebrow">03 / AGENDA</span>
+        <span class="meta">MEETING ALIGNMENT</span>
+      </div>
+
+      <div class="agenda">
+        <div>
+          <h2 class="reveal d2">
+            Five lenses.<br>
+            <span class="accent">One current-state view.</span>
+          </h2>
+
+          <div class="agenda-list" style="margin-top:40px">
+            <div class="agenda-row reveal d3">
+              <div class="n">01</div>
+              <div class="t">Structure</div>
+            </div>
+
+            <div class="agenda-row reveal d4">
+              <div class="n">02</div>
+              <div class="t">User Access &amp; Authorization</div>
+            </div>
+
+            <div class="agenda-row reveal d5">
+              <div class="n">03</div>
+              <div class="t">Invoice Receiving</div>
+            </div>
+
+            <div class="agenda-row reveal d6">
+              <div class="n">04</div>
+              <div class="t">Invoice Distribution &amp; Processing</div>
+            </div>
+
+            <div class="agenda-row reveal d7">
+              <div class="n">05</div>
+              <div class="t">Invoice Approval</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="agenda-panel reveal-scale d4">
+          <div class="eyebrow">MEETING PURPOSE</div>
+
+          <div class="big">
+            See the<br>
+            <span class="accent">whole path.</span>
+          </div>
+
+          <div class="nodes">
+            <span class="node active"></span>
+            <span class="connector"></span>
+            <span class="node"></span>
+            <span class="connector"></span>
+            <span class="node"></span>
+            <span class="connector"></span>
+            <span class="node"></span>
+          </div>
+
+          <div class="small">
+            Showcase the RPA team’s current process and provide Phase 1 build
+            inputs for VIC.AI configuration.
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <span>RPA / VIC.AI PHASE 1</span>
+        <span>Agenda</span>
+      </div>
+    </section>
+
+    <!-- Slide 4 -->
+    <section class="slide" data-slide="4">
+      <div class="topline reveal d1">
+        <span class="eyebrow">04 / STRUCTURE</span>
+        <span class="meta">ENTITIES / COMPANY CODES / COST OBJECTS</span>
+      </div>
+
+      <div class="head reveal d2">
+        <h2>
+          Start with the <span class="accent">coding spine.</span>
+        </h2>
+
+        <div class="note">
+          Company Code is entered at the beginning of F-63. SAP maps Cost Center
+          from Company Code.
+        </div>
+      </div>
+
+      <div class="structure">
+        <div class="entity-card reveal-scale d3">
+          <div class="eyebrow">ENTITIES IN SCOPE</div>
+
+          <div class="big">
+            NEER<br>
+            + NEET
+          </div>
+
+          <p>
+            Regulatory &amp; Public Affairs invoice population with line-level
+            WBS coding.
+          </p>
+
+          <div class="mini">SAP S/4HANA 2021</div>
+        </div>
+
+        <div class="chain">
+          <div class="chain-row reveal d4">
+            <div class="label">Company Code</div>
+            <div class="arrow">→</div>
+            <div class="detail">
+              <div class="codes">
+                <span class="code">4199</span>
+                <span class="code">2000</span>
+                <span class="code">2001</span>
+                <span class="code">1252</span>
+                <span class="code">1283</span>
+              </div>
+
+              <div style="margin-top:12px">
+                Entered first in F-63
+              </div>
+            </div>
+          </div>
+
+          <div class="chain-row reveal d5">
+            <div class="label">WBS Element</div>
+            <div class="arrow">→</div>
+            <div class="detail">
+              Primary coding object at the line-item level, including
+              proportional splits across multiple WBS elements.
+            </div>
+          </div>
+
+          <div class="chain-row reveal d6">
+            <div class="label">Cost Center</div>
+            <div class="arrow">→</div>
+            <div class="detail">
+              SAP backend mapping derives or auto-selects Cost Center based on
+              Company Code.
+            </div>
+          </div>
+
+          <div class="chain-row reveal d7">
+            <div class="label">Posting pattern</div>
+            <div class="arrow">→</div>
+            <div class="detail">
+              Multi-company-code invoices are posted as separate line items per
+              company code.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <span>RPA / VIC.AI PHASE 1</span>
+        <span>Structure</span>
+      </div>
+    </section>
+
+    <!-- Slide 5 -->
+    <section class="slide" data-slide="5">
+      <div class="topline reveal d1">
+        <span class="eyebrow">05 / USER ACCESS &amp; AUTHORIZATION</span>
+        <span class="meta">ROLES + SEPARATION OF DUTIES</span>
+      </div>
+
+      <div class="roles">
+        <div>
+          <h2 class="reveal d2">
+            The processor moves the invoice.<br>
+            <span class="accent">They do not approve it.</span>
+          </h2>
+
+          <div class="lane-card reveal d4" style="margin-top:40px">
+            <div class="lane">
+              <div class="role">Processor / coder</div>
+              <div class="task">
+                One RPA processor enters coding, creates splits, and resolves
+                posting errors.
+              </div>
+            </div>
+
+            <div class="lane">
+              <div class="role">Approver group</div>
+              <div class="task">
+                About 25 approvers across Manager, Director, and VP levels based
+                on thresholds.
+              </div>
+            </div>
+
+            <div class="lane">
+              <div class="role">Approval surface</div>
+              <div class="task">
+                Approvals happen entirely within SAP workflow through Work Items
+                / SAP Inbox.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sod reveal-scale d3">
+          <div class="eyebrow">
+            CONTROL THAT MUST SURVIVE AUTOMATION
+          </div>
+
+          <div class="statement">
+            Coder <em>≠</em><br>
+            approver.
+          </div>
+
+          <div class="wf">
+            <div class="wf-box active">Code + split</div>
+            <div class="wf-arrow">→</div>
+            <div class="wf-box">SAP workflow</div>
+            <div class="wf-arrow">→</div>
+            <div class="wf-box">Approve</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <span>RPA / VIC.AI PHASE 1</span>
+        <span>Access + SoD</span>
+      </div>
+    </section>
+
+    <!-- Slide 6 -->
+    <section class="slide" data-slide="6">
+      <div class="topline reveal d1">
+        <span class="eyebrow">06 / INVOICE RECEIVING</span>
+        <span class="meta">CURRENT INTAKE</span>
+      </div>
+
+      <div class="intake">
+        <div class="mail reveal-scale d2">
+          <div class="small">Current state</div>
+
+          <div class="big">
+            One<br>
+            inbox.
+          </div>
+
+          <p>
+            Invoices arrive through a single shared mailbox monitored by one
+            processor. Approximately 99% arrive as PDF.
+          </p>
+        </div>
+
+        <div>
+          <h2 class="reveal d3">
+            The intake surface is narrow.<br>
+            <span class="accent">The handoff matters.</span>
+          </h2>
+
+          <div class="flow" style="margin-top:40px">
+            <div class="flow-row reveal d4">
+              <div class="flow-num">01</div>
+
+              <div>
+                <strong>Invoice arrives</strong>
+                <span>
+                  Vendor sends a PDF to the single shared mailbox.
+                </span>
+              </div>
+
+              <div class="flow-side">~99% PDF</div>
+            </div>
+
+            <div class="flow-row reveal d5">
+              <div class="flow-num">02</div>
+
+              <div>
+                <strong>Processor monitors</strong>
+                <span>
+                  One processor triages the intake and begins the coding work.
+                </span>
+              </div>
+
+              <div class="flow-side">~200 / month</div>
+            </div>
+
+            <div class="flow-row reveal d6">
+              <div class="flow-num">03</div>
+
+              <div>
+                <strong>Phase 1 build input</strong>
+                <span>
+                  Evaluate best-practice VIC.AI intake using email ingestion.
+                </span>
+              </div>
+
+              <div class="flow-side">Open question</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <span>RPA / VIC.AI PHASE 1</span>
+        <span>Invoice receiving</span>
+      </div>
+    </section>
+
+    <!-- Slide 7 -->
+    <section class="slide" data-slide="7">
+      <div class="topline reveal d1">
+        <span class="eyebrow">07 / INVOICE DISTRIBUTION &amp; PROCESSING</span>
+        <span class="meta">TOOLS + REQUIRED FIELDS</span>
+      </div>
+
+      <div class="process">
+        <div>
+          <h2 class="reveal d2">
+            Every invoice becomes a set of
+            <span class="accent">line decisions.</span>
+          </h2>
+
+          <div class="tool-list" style="margin-top:38px">
+            <div class="tool feature reveal d4">
+              <div class="micro">Primary entry point</div>
+              <strong>F-63</strong>
+
+              <div class="fields">
+                <span class="field">Company Code</span>
+                <span class="field">PK = 40</span>
+                <span class="field">G/L Account</span>
+                <span class="field">WBS Element</span>
+                <span class="field">Amount</span>
+              </div>
+            </div>
+
+            <div class="tool reveal d5">
+              <div class="micro">SAP Fiori apps</div>
+              <strong>“Submit Non-PO Invoice”</strong>
+
+              <div style="font-size:22px;color:#576071;margin-top:6px">
+                and “Submit Non-PO Special Invoice”
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sap reveal-scale d3">
+          <div class="sap-head">
+            <span class="sap-title">
+              Non-PO invoice / line coding
+            </span>
+
+            <span class="sap-badge">
+              SAP S/4HANA 2021
+            </span>
+          </div>
+
+          <div class="table">
+            <div class="tr th">
+              <div>CoCode</div>
+              <div>PK</div>
+              <div>G/L Account</div>
+              <div>WBS Element</div>
+              <div>Amount</div>
+            </div>
+
+            <div class="tr tb">
+              <div>4199</div>
+              <div>40</div>
+              <div>6•••••</div>
+              <div>NEER-••••</div>
+              <div>$4,200</div>
+            </div>
+
+            <div class="tr tb">
+              <div>2000</div>
+              <div>40</div>
+              <div>6•••••</div>
+              <div>NEET-••••</div>
+              <div>$2,800</div>
+            </div>
+
+            <div class="tr tb">
+              <div>2001</div>
+              <div>40</div>
+              <div>6•••••</div>
+              <div>NEER-••••</div>
+              <div>$1,000</div>
+            </div>
+          </div>
+
+          <div class="split-note">
+            <strong>
+              Line-level splits<br>
+              <span style="font-size:19px;color:rgba(255,255,255,.6)">
+                including proportional WBS allocation
+              </span>
+            </strong>
+
+            <span>
+              G/L Account is manually input by the processor using a
+              vendor-type reference list.
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <span>RPA / VIC.AI PHASE 1</span>
+        <span>Distribution + processing</span>
+      </div>
+    </section>
+
+    <!-- Slide 8 -->
+    <section class="slide" data-slide="8">
+      <div class="topline reveal d1">
+        <span class="eyebrow">08 / CONTROLS</span>
+        <span class="meta">PAIN POINTS + EXCEPTION HANDLING</span>
+      </div>
+
+      <div class="head reveal d2">
+        <h2>
+          Most rework starts with a
+          <span class="accent">bad match.</span>
+        </h2>
+
+        <div class="note">
+          Validate before posting, then route exceptions to the processor first.
+        </div>
+      </div>
+
+      <div class="watch" style="margin-top:35px">
+        <div class="watch-card reveal d3">
+          <div class="watch-num">01</div>
+
+          <div>
+            <h3>Invalid WBS</h3>
+            <p>
+              Projects move to new WBS elements; old and new can share similar
+              names.
+            </p>
+          </div>
+        </div>
+
+        <div class="watch-card reveal d4">
+          <div class="watch-num">02</div>
+
+          <div>
+            <h3>Company Code vs WBS mismatch</h3>
+            <p>
+              Ownership context can disagree before the posting is submitted.
+            </p>
+          </div>
+        </div>
+
+        <div class="watch-card reveal d5">
+          <div class="watch-num">03</div>
+
+          <div>
+            <h3>SAP posting errors</h3>
+            <p>
+              WBS locked or closed, account not allowed, or different company
+              code.
+            </p>
+          </div>
+        </div>
+
+        <div class="watch-card reveal d6">
+          <div class="watch-num">04</div>
+
+          <div>
+            <h3>F-63 usability constraint</h3>
+            <p>
+              F-63 provides only approximately 18 lines, sometimes not enough
+              for splits.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="control-band reveal d7">
+        <strong>Exception route: error → processor first</strong>
+        <span>
+          Success themes: reduce manual effort and improve compliance /
+          audit trail.
+        </span>
+      </div>
+
+      <div class="footer">
+        <span>RPA / VIC.AI PHASE 1</span>
+        <span>Controls + rework</span>
+      </div>
+    </section>
+
+    <!-- Slide 9 -->
+    <section class="slide" data-slide="9">
+      <div class="topline reveal d1">
+        <span class="eyebrow">09 / INVOICE APPROVAL</span>
+        <span class="meta">THRESHOLDS + ESCALATION</span>
+      </div>
+
+      <div class="approval">
+        <div>
+          <h2 class="reveal d2">
+            Approval behavior changes with the
+            <span class="accent">dollar value.</span>
+          </h2>
+
+          <div class="ladder" style="margin-top:40px">
+            <div class="threshold auto reveal d3">
+              <div class="amount">&lt; $500</div>
+              <div class="rule">Auto-approved in SAP</div>
+              <div class="detail">No approver action</div>
+            </div>
+
+            <div class="threshold parked reveal d4">
+              <div class="amount">&lt; $25,000</div>
+              <div class="rule">Parked → approver approves</div>
+              <div class="detail">
+                Then waits for clearing date
+              </div>
+            </div>
+
+            <div class="threshold reason reveal d5">
+              <div class="amount">&gt; $25,000</div>
+              <div class="rule">Reason required</div>
+              <div class="detail">SAP prompts before submit</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="escalate reveal-scale d4">
+          <h3>Escalation clock</h3>
+
+          <div class="esc">
+            <div class="bubble">03d</div>
+            <span>Supervisor</span>
+          </div>
+
+          <div class="esc">
+            <div class="bubble">03d</div>
+            <span>Initiator’s inbox</span>
+          </div>
+
+          <p>
+            Approvals happen entirely within SAP workflow through Work Items /
+            SAP Inbox.
+          </p>
+        </div>
+      </div>
+
+      <div class="footer">
+        <span>RPA / VIC.AI PHASE 1</span>
+        <span>Approval workflow</span>
+      </div>
+    </section>
+
+    <!-- Slide 10 -->
+    <section class="slide" data-slide="10">
+      <div class="topline reveal d1">
+        <span class="eyebrow">10 / BUILD INPUTS</span>
+        <span class="meta">PHASE 1 ALIGNMENT QUESTIONS FOR VIC.AI</span>
+      </div>
+
+      <div class="align">
+        <div>
+          <h2 class="reveal d2">
+            The build needs
+            <span class="accent">guardrails</span>, not guesses.
+          </h2>
+
+          <div class="questions" style="margin-top:30px">
+            <div class="question reveal d3">
+              <div class="number">01</div>
+              <div class="text">
+                Can VIC.AI validate WBS status, open / closed / locked, when
+                names are similar?
+              </div>
+            </div>
+
+            <div class="question reveal d4">
+              <div class="number">02</div>
+              <div class="text">
+                Can VIC.AI prevent or flag mismatched Company Code versus WBS
+                before posting?
+              </div>
+            </div>
+
+            <div class="question reveal d5">
+              <div class="number">03</div>
+              <div class="text">
+                How should VIC.AI handle invoices requiring more than 18
+                allocations?
+              </div>
+            </div>
+
+            <div class="question reveal d6">
+              <div class="number">04</div>
+              <div class="text">
+                What is the best-practice VIC.AI intake approach for the shared
+                mailbox?
+              </div>
+            </div>
+
+            <div class="question reveal d7">
+              <div class="number">05</div>
+              <div class="text">
+                Should coding notes become VIC.AI structured metadata or a
+                generated PDF coversheet?
+              </div>
+            </div>
+
+            <div class="question reveal d8">
+              <div class="number">06</div>
+              <div class="text">
+                For development-only invoices, should routing follow automated
+                WBS / vendor / category rules?
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="build reveal-scale d3">
+          <div class="micro">CONFIGURATION ALIGNMENT</div>
+
+          <div class="big">
+            Make the<br>
+            <em>right thing</em><br>
+            the easy thing.
+          </div>
+
+          <div class="guardrails">
+            <div class="guard">
+              <i></i>
+              <span>Validate before posting</span>
+            </div>
+
+            <div class="guard">
+              <i></i>
+              <span>Preserve separation of duties</span>
+            </div>
+
+            <div class="guard">
+              <i></i>
+              <span>Scale beyond F-63’s line limit</span>
+            </div>
+
+            <div class="guard">
+              <i></i>
+              <span>Keep the audit trail structured</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <span>RPA / VIC.AI PHASE 1</span>
+        <span>Next: configure, test, prove</span>
+      </div>
+    </section>
+  </main>
+
+  <nav class="nav" id="nav"></nav>
+
+  <div class="controls">
+    <button id="previousButton">← Previous</button>
+    <button id="nextButton">Next →</button>
+    <button id="fullscreenButton">Fullscreen</button>
+  </div>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll(".slide"));
+    const nav = document.getElementById("nav");
+    const previousButton = document.getElementById("previousButton");
+    const nextButton = document.getElementById("nextButton");
+    const fullscreenButton = document.getElementById("fullscreenButton");
+
+    let currentSlide = 0;
+
+    function fitSlides() {
+      const scale = Math.min(
+        window.innerWidth / 1920,
+        window.innerHeight / 1080
+      );
+
+      slides.forEach((slide) => {
+        slide.style.transform =
+          `translate(-50%, -50%) scale(${scale})`;
+      });
+    }
+
+    function buildNavigation() {
+      nav.innerHTML = "";
+
+      slides.forEach((slide, index) => {
+        const button = document.createElement("button");
+
+        button.setAttribute(
+          "aria-label",
+          `Go to slide ${index + 1}`
+        );
+
+        button.addEventListener("click", () => {
+          showSlide(index);
+        });
+
+        nav.appendChild(button);
+      });
+    }
+
+    function showSlide(index) {
+      currentSlide = Math.max(
+        0,
+        Math.min(index, slides.length - 1)
+      );
+
+      slides.forEach((slide, slideIndex) => {
+        slide.classList.toggle(
+          "active",
+          slideIndex === currentSlide
+        );
+      });
+
+      Array.from(nav.children).forEach((button, buttonIndex) => {
+        button.classList.toggle(
+          "active",
+          buttonIndex === currentSlide
+        );
+      });
+
+      updateUrlHash();
+    }
+
+    function updateUrlHash() {
+      const slideNumber = currentSlide + 1;
+      history.replaceState(
+        null,
+        "",
+        `#slide-${slideNumber}`
+      );
+    }
+
+    function slideFromHash() {
+      const match = window.location.hash.match(
+        /slide-(\d+)/
+      );
+
+      if (!match) {
+        return 0;
+      }
+
+      const slideNumber = Number(match[1]);
+      return Math.max(
+        0,
+        Math.min(slideNumber - 1, slides.length - 1)
+      );
+    }
+
+    function nextSlide() {
+      showSlide(currentSlide + 1);
+    }
+
+    function previousSlide() {
+      showSlide(currentSlide - 1);
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.();
+      } else {
+        document.exitFullscreen?.();
+      }
+    }
+
+    previousButton.addEventListener(
+      "click",
+      previousSlide
+    );
+
+    nextButton.addEventListener(
+      "click",
+      nextSlide
+    );
+
+    fullscreenButton.addEventListener(
+      "click",
+      toggleFullscreen
+    );
+
+    document.addEventListener("keydown", (event) => {
+      switch (event.key) {
+        case "ArrowRight":
+        case "ArrowDown":
+        case " ":
+          event.preventDefault();
+          nextSlide();
+          break;
+
+        case "ArrowLeft":
+        case "ArrowUp":
+          event.preventDefault();
+          previousSlide();
+          break;
+
+        case "Home":
+          event.preventDefault();
+          showSlide(0);
+          break;
+
+        case "End":
+          event.preventDefault();
+          showSlide(slides.length - 1);
+          break;
+
+        case "f":
+        case "F":
+          event.preventDefault();
+          toggleFullscreen();
+          break;
+      }
+    });
+
+    let wheelLocked = false;
+
+    window.addEventListener(
+      "wheel",
+      (event) => {
+        if (wheelLocked) {
+          return;
+        }
+
+        const delta =
+          Math.abs(event.deltaX) > Math.abs(event.deltaY)
+            ? event.deltaX
+            : event.deltaY;
+
+        if (Math.abs(delta) < 20) {
+          return;
+        }
+
+        wheelLocked = true;
+
+        if (delta > 0) {
+          nextSlide();
+        } else {
+          previousSlide();
+        }
+
+        window.setTimeout(() => {
+          wheelLocked = false;
+        }, 500);
+      },
+      { passive: true }
+    );
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    window.addEventListener(
+      "touchstart",
+      (event) => {
+        const touch = event.touches[0];
+
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+      },
+      { passive: true }
+    );
+
+    window.addEventListener(
+      "touchend",
+      (event) => {
+        const touch = event.changedTouches[0];
+
+        const deltaX = touch.clientX - touchStartX;
+        const deltaY = touch.clientY - touchStartY;
+
+        const horizontalSwipe =
+          Math.abs(deltaX) > 50 &&
+          Math.abs(deltaX) > Math.abs(deltaY) * 1.2;
+
+        if (!horizontalSwipe) {
+          return;
+        }
+
+        if (deltaX < 0) {
+          nextSlide();
+        } else {
+          previousSlide();
+        }
+      },
+      { passive: true }
+    );
+
+    window.addEventListener("resize", fitSlides);
+
+    window.addEventListener("hashchange", () => {
+      showSlide(slideFromHash());
+    });
+
+    buildNavigation();
+    fitSlides();
+    showSlide(slideFromHash());
+  </script>
+</body>
+</html>
